@@ -4,15 +4,19 @@ from openpyxl import load_workbook
 import urllib.parse
 import requests
 import matplotlib.pyplot as pl
-# import cartopy.crs as ccrs
-# import cartopy.io.img_tiles as cimgt
+import cartopy.crs as ccrs
+import cartopy.io.img_tiles as cimgt
+import numpy
 
 class PostcodeMapper(object):
 
 	endpoint = "http://api.getthedata.com/postcode/"
-	csvfields = ['postcode', 'latitude', 'longitude']
-	cache = dict()
 	coords = dict()
+
+	csvfields = ['postcode', 'longitude', 'latitude']
+	cache = dict()
+	cachefile = None
+	recache = False
 
 	# Number of bins for histogram - smaller = less resolution
 	xbins = 30
@@ -33,11 +37,12 @@ class PostcodeMapper(object):
 					self.cache[row['postcode']] = (float(row['longitude']), float(row['latitude']))
 
 	def saveCache(self) :
-		with open(self.cachefile, 'w') as c :
-			d = csv.DictWriter(c, fieldnames=self.csvfields)
-			d.writeheader()
-			for k, v in self.cache.items() :
-				d.writerow({'postcode': k, 'latitude': v[0], 'longitude': v[1]})
+		if self.recache :
+			with open(self.cachefile, 'w') as c :
+				d = csv.DictWriter(c, fieldnames=self.csvfields)
+				d.writeheader()
+				for k, v in self.cache.items() :
+					d.writerow({'postcode': k, 'longitude': v[0], 'latitude': v[1]})
 
 	def importXLS(self, file, sheet, column, header) :
 		# Read in postcodes from xlsx, convert to coords, then write back to a csv
@@ -59,29 +64,32 @@ class PostcodeMapper(object):
 		if postcode in self.cache :
 			return self.cache[postcode]
 		else :
+			self.recache = True
 			request = requests.get(self.endpoint + urllib.parse.quote_plus(postcode))
 			response = request.json()
 
 			if response['status'] == 'match' :
-				coords = ( float(response['data']['latitude']), float(response['data']['longitude']) )
+				coords = ( float(response['data']['longitude']), float(response['data']['latitude']) )
 				self.cache[postcode] = coords
 				return coords
 			else :
 				return False
 
-	def heatmap(self) :
-		x = [ m[0] for n, m in self.coords.items() if m ]
-		y = [ m[1] for n, m in self.coords.items() if m ]
+	def importUnits(self) :
+		# Import coordinates of Units to add to plot
+		pass
 
-		# request = cimgt.OSM()
-		# fig, ax = pl.subplots(figsize=(10,16), subplot_kw=dict(projection=request.crs))
-		# extent = [ min(x) - 0.5, min(y) - 0.5, max(x) + 0.5, max(y) + 0.5 ]
-		# ax.set_extent(extent)
-		# ax.add_image(request, 8)
-		#
-		# xynps = ax.projection.transform_points(ccrs.Geodetic(), x, y)
-		#
-		# m = ax.hist2d(xynps[:,0], xynps[:,1], bins=[ self.xbins, self.ybins ], zorder=10, alpha=0.5)
-		# cbar = pl.colorbar(m[3], ax=ax, shrink=0.45, format='%.1f')
-		m = pl.hist2d(x, y, [ self.xbins, self.ybins ])
+	def makeMap(self) :
+		x = numpy.asarray([ m[0] for n, m in self.coords.items() if m ])
+		y = numpy.asarray([ m[1] for n, m in self.coords.items() if m ])
+
+		# request = cimgt.GoogleTiles(style='street')
+		request = cimgt.Stamen('watercolor')
+		ax = pl.axes(projection=request.crs)
+		ax.add_image(request, 14)
+
+		xynps = ax.projection.transform_points(ccrs.Geodetic(), x, y)
+		m = ax.hist2d(xynps[:,0], xynps[:,1], bins=[ self.xbins, self.ybins ], alpha=0.6, cmap=pl.cm.Purples)
+		cbar = pl.colorbar(m[3], ax=ax, shrink=0.5, format='%.1f')
+		# m = pl.scatter(xynps[:,0], xynps[:,1])
 		pl.show()
