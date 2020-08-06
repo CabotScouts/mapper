@@ -1,15 +1,15 @@
 import csv
 from pathlib import Path
-from openpyxl import load_workbook
 import urllib.parse
+
+from pprint import pprint
+
+from openpyxl import load_workbook
 import requests
 import matplotlib.pyplot as pl
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import numpy
-
-from pprint import pprint
-
 
 class PostcodeMapper(object):
 
@@ -22,8 +22,8 @@ class PostcodeMapper(object):
     recache = False
 
     # Number of bins for histogram - smaller = less resolution
-    xbins = 28
-    ybins = 28
+    xbins = 25
+    ybins = 25
 
     tiledepth = 16
 
@@ -94,8 +94,19 @@ class PostcodeMapper(object):
         pass
 
     def getUnits(self):
-        # Import coordinates of Units to add to plot
-        units = numpy.array()
+        units = numpy.array(
+            [
+                [51.4786941724208, -2.598413827911372, "red"],  # Brabazon
+                [51.455440, -2.620430, "purple"], # Clifton
+                [51.486130609067075, -2.589508893981929, "orange"],  # Concorde
+                [51.47463134806349, -2.583211067214961, "orange"],  # Phoenix
+                [51.512744513854194, -2.6151856808814955, "green"],  # Pirates
+                [51.487019158751714, -2.6184016494903517, "orange"],  # Spaniorum
+                [51.46631052970262, -2.600189450279231, "orange"],  # Spitfire
+                [51.48641788642314, -2.6240557460937453, "red"],  # Steama
+                [51.48279004181177, -2.6097863941345167, "orange"],  # White Tree
+            ]
+        )
 
         return units
 
@@ -122,13 +133,14 @@ class PostcodeMapper(object):
             cmin=1,
         )
         cbar = pl.colorbar(m[3], ax=ax, shrink=0.4, format="%.1f")
+        # pl.scatter(xynps[:,0], xynps[:,1], s=50, c="yellow", marker='o')
 
         units = self.getUnits()
         unps = ax.projection.transform_points(
             ccrs.Geodetic(), units[:, 1].astype(float), units[:, 0].astype(float)
         )
-        # pl.scatter(unps[:,0], unps[:,1], s=100, c=units[:,2], marker='D')
-        pl.scatter(unps[:, 0], unps[:, 1], s=100, c="purple", marker="D")
+        pl.scatter(unps[:,0], unps[:,1], s=30, c=units[:,2], marker='D')
+        # pl.scatter(unps[:, 0], unps[:, 1], s=100, c="purple", marker="D")
 
         # ax.set_extent([51.526760, 51.454065, -2.698467, -2.564378])
         pl.margins(0.5)
@@ -137,7 +149,7 @@ class PostcodeMapper(object):
         pl.savefig(
             "figure.pdf",
             orientation="landscape",
-            papertype="a3",
+            # papertype="a3",
             format="pdf",
             dpi=600,
             bbox_inches="tight",
