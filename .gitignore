@@ -1,4 +1,4 @@
-venv
+.venv/
 
 *.pyc
 
@@ -7,7 +7,6 @@ venv
 *.xls
 *.xlsx
 *.csv
-*.txt
 
 *.pdf
 *.fig
