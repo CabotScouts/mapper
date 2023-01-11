@@ -14,3 +14,7 @@
 *.jpeg
 *.png
 *.gif
+
+*.py
+!example.py
+!mapper/*.py

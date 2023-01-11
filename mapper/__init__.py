@@ -15,17 +15,15 @@ class PostcodeMapper(object):
 
     endpoint = "http://api.getthedata.com/postcode/"
     coords = []
-
     csvfields = ["postcode", "longitude", "latitude"]
     cache = dict()
     cachefile = None
     recache = False
-
-    # Number of bins for histogram - smaller = less resolution
-    xbins = 40
+    xbins = 40 # Number of bins for histogram - smaller = less resolution
     ybins = 40
-
     tiledepth = 16
+    markers = None # numpy array of [lat, long, colour] for each point to mark
+    figure = None # matplotlib figure
 
     def __init__(self, cache=None):
         cachefile = cache if cache else "postcodes.csv"
@@ -93,64 +91,56 @@ class PostcodeMapper(object):
     def importPostcodes(file, sheet, column, header):
         pass
 
-    def getUnits(self):
-        units = numpy.array(
-            [
-                [51.472855, -2.584198, "red"], # Arizona
-                [51.4786941724208, -2.598413827911372, "red"],  # Brabazon
-                [51.486130609067075, -2.589508893981929, "orange"],  # Concorde
-                [51.47463134806349, -2.583211067214961, "orange"],  # Phoenix
-                [51.512744513854194, -2.6151856808814955, "green"],  # Pirates
-                [51.487019158751714, -2.6184016494903517, "orange"],  # Spaniorum
-                [51.46631052970262, -2.600189450279231, "green"],  # Spitfire
-                [51.48641788642314, -2.6240557460937453, "red"],  # Steama
-                [51.48279004181177, -2.6097863941345167, "orange"],  # White Tree
-            ]
-        )
+    def addMarkers(self, markers) :
+        self.markers = numpy.array(markers)
 
-        return units
+    def makeMap(self, **kwargs):
+        sizes = {
+            "a3": (11.693, 16.535, ), # a3 landscape
+            "a4": (8.268, 11.693), # a4 landscape
+        }
+        
+        size = kwargs.get("paper", "a4")
+        oriented = (sizes[size][0], sizes[size][1]) if (kwargs.get("orientation", "landscape") == 'portrait') else (sizes[size][1], sizes[size][0])
+        self.figure = pl.figure(figsize=oriented)
 
-    def makeMap(self):
-        pl.figure(figsize=(16.53, 11.69))
-
-        x = numpy.asarray([m[0] for m in self.coords if m])
-        y = numpy.asarray([m[1] for m in self.coords if m])
-
-        # request = cimgt.GoogleTiles(style='street')
-        # request = cimgt.Stamen('watercolor')
         request = cimgt.QuadtreeTiles()
-
         ax = pl.axes(projection=request.crs)
         ax.add_image(request, self.tiledepth)
 
-        xynps = ax.projection.transform_points(ccrs.Geodetic(), x, y)
-        m = ax.hist2d(
-            xynps[:, 0],
-            xynps[:, 1],
-            bins=[self.xbins, self.ybins],
-            alpha=0.5,
-            cmap=pl.cm.jet,
-            cmin=1,
-        )
-        cbar = pl.colorbar(m[3], ax=ax, shrink=0.4, format="%.1f")
-        # pl.scatter(xynps[:,0], xynps[:,1], s=50, c="yellow", marker='o')
+        if len(self.coords) > 0:
+            x = numpy.asarray([m[0] for m in self.coords if m])
+            y = numpy.asarray([m[1] for m in self.coords if m])
 
-        units = self.getUnits()
-        unps = ax.projection.transform_points(
-            ccrs.Geodetic(), units[:, 1].astype(float), units[:, 0].astype(float)
-        )
-        pl.scatter(unps[:,0], unps[:,1], s=30, c=units[:,2], marker='D')
-        # pl.scatter(unps[:, 0], unps[:, 1], s=100, c="purple", marker="D")
+            xynps = ax.projection.transform_points(ccrs.Geodetic(), x, y)
+            m = ax.hist2d(
+                xynps[:, 0],
+                xynps[:, 1],
+                bins=[self.xbins, self.ybins],
+                alpha=0.5,
+                cmap=pl.cm.jet,
+                cmin=1,
+            )
 
-        # ax.set_extent([51.526760, 51.454065, -2.698467, -2.564378])
-        pl.margins(0.5)
+            bounds = list(range(1, 10))
+            cbar = pl.colorbar(m[3], ax=ax, shrink=0.4, format="%.0f", ticks=bounds, label='People per bin')
 
-        # pl.show()
-        pl.savefig(
-            "figure.pdf",
-            orientation="landscape",
-            # papertype="a3",
-            format="pdf",
-            dpi=600,
-            bbox_inches="tight",
-        )
+        if self.markers is not None:
+            unps = ax.projection.transform_points(
+                ccrs.Geodetic(), self.markers[:, 1].astype(float), self.markers[:, 0].astype(float)
+            )
+            pl.scatter(unps[:,0], unps[:,1], s=30, c=self.markers[:,2], marker='D')
+
+        pl.tight_layout(pad=4)
+
+        file = kwargs.get("file", None)
+        if file:
+            self.saveMap(file)
+
+    def saveMap(self, filename) :
+        if self.figure:
+            self.figure.savefig(
+                filename,
+                dpi=self.figure.dpi,
+            )
+        
