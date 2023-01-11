@@ -9,24 +9,27 @@ import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import numpy
 
+
 class PostcodeMapper(object):
 
+    title = None
     endpoint = "http://api.getthedata.com/postcode/"
     coords = []
     csvfields = ["postcode", "longitude", "latitude"]
     cache = dict()
     cachefile = None
     recache = False
-    xbins = 40 # Number of bins for histogram - smaller = less resolution
+    xbins = 40  # Number of bins for histogram - smaller = less resolution
     ybins = 40
     tiledepth = 16
-    markers = None # numpy array of [lat, long, colour] for each point to mark
-    figure = None # matplotlib figure
+    markers = None  # numpy array of [lat, long, colour] for each point to mark
+    figure = None  # matplotlib figure
 
-    def __init__(self, cache=None):
+    def __init__(self, cache=None, **kwargs):
         cachefile = cache if cache else "mapper/postcodes.csv"
         self.cachefile = Path(cachefile)
         self.loadCache()
+        self.title = kwargs.get("title", None)
 
     def loadCache(self):
         # Retrieves cached coordinates, if they exist
@@ -94,24 +97,31 @@ class PostcodeMapper(object):
     def importPostcodes(file, sheet, column, header):
         pass
 
-    def addMarkers(self, markers) :
+    def addMarkers(self, markers):
         self.markers = numpy.array(markers)
 
     def makeMap(self, **kwargs):
         sizes = {
-            "a3": (11.693, 16.535), # a3 portrait
+            "a3": (11.693, 16.535),  # a3 portrait
             "a4": (8.268, 11.693),  # a4 portrait
         }
-        
+
         paper = sizes[kwargs.get("paper", "a4")]
         orientation = kwargs.get("orientation", "landscape")
-        oriented = (paper[0], paper[1]) if (orientation == 'portrait') else (paper[1], paper[0])
+        oriented = (
+            (paper[0], paper[1])
+            if (orientation == "portrait")
+            else (paper[1], paper[0])
+        )
 
         self.figure = pl.figure(figsize=oriented)
 
         request = cimgt.QuadtreeTiles()
         ax = pl.axes(projection=request.crs)
         ax.add_image(request, self.tiledepth)
+
+        if self.title:
+            pl.title(label=self.title)
 
         if len(self.coords) > 0:
             x = numpy.asarray([m[0] for m in self.coords if m])
@@ -128,13 +138,22 @@ class PostcodeMapper(object):
             )
 
             bounds = list(range(1, 10))
-            cbar = pl.colorbar(m[3], ax=ax, shrink=0.4, format="%.0f", ticks=bounds, label='People per bin')
+            cbar = pl.colorbar(
+                m[3],
+                ax=ax,
+                shrink=0.4,
+                format="%.0f",
+                ticks=bounds,
+                label="People per bin",
+            )
 
         if self.markers is not None:
             unps = ax.projection.transform_points(
-                ccrs.Geodetic(), self.markers[:, 1].astype(float), self.markers[:, 0].astype(float)
+                ccrs.Geodetic(),
+                self.markers[:, 1].astype(float),
+                self.markers[:, 0].astype(float),
             )
-            pl.scatter(unps[:,0], unps[:,1], s=30, c=self.markers[:,2], marker='D')
+            pl.scatter(unps[:, 0], unps[:, 1], s=30, c=self.markers[:, 2], marker="D")
 
         pl.tight_layout(pad=4)
 
@@ -142,10 +161,9 @@ class PostcodeMapper(object):
         if file:
             self.saveMap(file)
 
-    def saveMap(self, filename) :
+    def saveMap(self, filename):
         if self.figure:
             self.figure.savefig(
                 filename,
                 dpi=self.figure.dpi,
             )
-        
