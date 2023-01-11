@@ -26,7 +26,7 @@ class PostcodeMapper(object):
     figure = None # matplotlib figure
 
     def __init__(self, cache=None):
-        cachefile = cache if cache else "postcodes.csv"
+        cachefile = cache if cache else "mapper/postcodes.csv"
         self.cachefile = Path(cachefile)
         self.loadCache()
 
@@ -63,18 +63,20 @@ class PostcodeMapper(object):
         self.convertPostcodes(postcodes)
 
     def convertPostcodes(self, postcodes):
-        # pc = { postcode: self.coordFromPostcode(postcode) for postcode in postcodes }
-        # self.saveCache()
-        # pprint(pc)
         for postcode in postcodes:
-            self.coords.append(self.coordFromPostcode(postcode))
-        # return pc
+            coord = self.coordFromPostcode(postcode)
+            if coord:
+                self.coords.append(coord)
+
+        self.saveCache()
 
     def coordFromPostcode(self, postcode):
-        if postcode in self.cache:
-            return self.cache[postcode]
+        key = postcode.replace(" ", "")
+
+        if key in self.cache:
+            return self.cache[key]
+
         else:
-            self.recache = True
             request = requests.get(self.endpoint + urllib.parse.quote_plus(postcode))
             response = request.json()
 
@@ -83,7 +85,10 @@ class PostcodeMapper(object):
                     float(response["data"]["longitude"]),
                     float(response["data"]["latitude"]),
                 )
-                self.cache[postcode] = coords
+
+                self.cache[key] = coords
+                self.recache = True
+
                 return coords
             else:
                 return False
@@ -96,12 +101,14 @@ class PostcodeMapper(object):
 
     def makeMap(self, **kwargs):
         sizes = {
-            "a3": (11.693, 16.535, ), # a3 landscape
-            "a4": (8.268, 11.693), # a4 landscape
+            "a3": (11.693, 16.535), # a3 portrait
+            "a4": (8.268, 11.693),  # a4 portrait
         }
         
-        size = kwargs.get("paper", "a4")
-        oriented = (sizes[size][0], sizes[size][1]) if (kwargs.get("orientation", "landscape") == 'portrait') else (sizes[size][1], sizes[size][0])
+        paper = sizes[kwargs.get("paper", "a4")]
+        orientation = kwargs.get("orientation", "landscape")
+        oriented = (paper[0], paper[1]) if (orientation == 'portrait') else (paper[1], paper[0])
+
         self.figure = pl.figure(figsize=oriented)
 
         request = cimgt.QuadtreeTiles()

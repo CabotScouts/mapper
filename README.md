@@ -12,7 +12,8 @@ Also allows for the plotting of coloured markers to identify points of interest 
 `example.py` gives an example of loading postcodes from a spreadsheet, plotting two markers, and then saving the map as a pdf (A4 landscape)
 
 ## Future development
-* Caching of postcodes into local csv (is it possible to get all postcodes in the UK in advance and skip calling the API altogether?)
+* ~~Caching of postcodes into local csv~~ (is it possible to get all postcodes in the UK in advance and skip calling the API altogether?)
+* Caching of cartopy img_tiles? Would reduce hits to tile provider and allow for offline plotting if in area we've plotted before
 * Expand map tiles to fill paper
 * Add a border around plotted points (find min/max extents from coords and expand slightly)
 * Add more paper sizes
