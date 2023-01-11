@@ -22,7 +22,7 @@ class PostcodeMapper(object):
     xbins = 40  # Number of bins for histogram - smaller = less resolution
     ybins = 40
     tiledepth = 16
-    markers = None  # numpy array of [lat, long, colour] for each point to mark
+    markers = []  # list of numpy arrays [lat, long, colour] for each point to mark
     figure = None  # matplotlib figure
 
     def __init__(self, cache=None, **kwargs):
@@ -98,7 +98,7 @@ class PostcodeMapper(object):
         pass
 
     def addMarkers(self, markers):
-        self.markers = numpy.array(markers)
+        self.markers.append(numpy.array(markers))
 
     def makeMap(self, **kwargs):
         sizes = {
@@ -138,7 +138,7 @@ class PostcodeMapper(object):
             )
 
             bounds = list(range(1, 10))
-            cbar = pl.colorbar(
+            pl.colorbar(
                 m[3],
                 ax=ax,
                 shrink=0.4,
@@ -147,13 +147,14 @@ class PostcodeMapper(object):
                 label="People per bin",
             )
 
-        if self.markers is not None:
-            unps = ax.projection.transform_points(
-                ccrs.Geodetic(),
-                self.markers[:, 1].astype(float),
-                self.markers[:, 0].astype(float),
-            )
-            pl.scatter(unps[:, 0], unps[:, 1], s=30, c=self.markers[:, 2], marker="D")
+        if len(self.markers) > 0:
+            for markers in self.markers:
+                unps = ax.projection.transform_points(
+                    ccrs.Geodetic(),
+                    markers[:, 1].astype(float),
+                    markers[:, 0].astype(float),
+                )
+                pl.scatter(unps[:, 0], unps[:, 1], s=30, c=markers[:, 2], marker="D")
 
         pl.tight_layout(pad=4)
 
