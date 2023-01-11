@@ -2,8 +2,6 @@ import csv
 from pathlib import Path
 import urllib.parse
 
-from pprint import pprint
-
 from openpyxl import load_workbook
 import requests
 import matplotlib.pyplot as pl
