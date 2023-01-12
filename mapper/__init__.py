@@ -51,17 +51,38 @@ class Mapper(object):
                 for k, v in self.cache.items():
                     d.writerow({"postcode": k, "longitude": v[0], "latitude": v[1]})
 
-    def importXLS(self, file, sheet, column, header):
-        # Read in data from xlsx, convert to coords, then write back to a csv
-        wb = load_workbook(filename=file)
-        ws = wb[sheet]
+    def importPostcodesFromXLS(self, **kwargs):
+        file = kwargs.get("file", "import.xlsx")
+        if Path(file).is_file():
+            wb = load_workbook(filename=file)
+            sheet = kwargs.get("sheet", "members")
+            if sheet in wb:
+                ws = wb[sheet]
 
-        postcodes = [cell.value for cell in ws[column]]
+                column = kwargs.get("column", "A")
+                if column in ws:
+                    postcodes = [cell.value for cell in ws[column]]
 
-        if header:
-            del postcodes[0]
+                    if kwargs.get("header", False):
+                        del postcodes[0]
 
-        self.convertPostcodes(postcodes)
+                    self.convertPostcodes(postcodes)
+
+    def importPostcodesFromCSV(self, **kwargs):
+        postcodes = []
+
+        file = kwargs.get("file", "import.csv")
+        if Path(file).is_file():
+            with open(Path(file), "r") as c:
+                if kwargs.get("header", False):
+                    d = csv.DictReader(c)
+                else:
+                    d = csv.reader(c)
+
+                for row in d:
+                    postcodes.append(row[kwargs.get("column", 0)])
+
+                self.convertPostcodes(postcodes)
 
     def convertPostcodes(self, postcodes):
         for postcode in postcodes:

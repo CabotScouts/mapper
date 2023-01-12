@@ -7,11 +7,10 @@ markers = [
 
 if __name__ == "__main__":
     p = Mapper(title="An Example Map")
-    p.importXLS(
-        "example.xslx",  # input xlsx file
-        "all",  # name of workbook
-        "A",  # column of postcodes
-        True,  # does the column have a header?
+    p.importPostcodesFromCSV(
+        file="example.csv",  # input csv file
+        column="postcodes",  # column of postcodes
+        header=True,  # does the column have a header?
     )
-    p.addMarkers(markers)
+    # p.addMarkers(markers)
     p.makeMap(file="map.pdf", paper="a4", orientation="landscape")

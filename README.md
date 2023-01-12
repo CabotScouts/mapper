@@ -17,5 +17,5 @@ Also allows for the plotting of coloured markers to identify points of interest 
 * Expand map tiles to fill paper
 * Add a border around plotted points (find min/max extents from coords and expand slightly)
 * Add more paper sizes
-* Import of postcodes from csv (create example file with postcodes around Central London)
+* ~~Import of postcodes from csv~~ (create example file with postcodes around Central London)
 * Static method to load markers from a CSV into numpy array
