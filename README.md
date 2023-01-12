@@ -1,5 +1,5 @@
 # mapper
-This modules acts as a wrapper for the `matplotlib` and `cartopy` libraries, creating a fairly simple way of plotting postcode data
+This module acts as a wrapper for the `matplotlib` and `cartopy` libraries, creating a fairly simple way of plotting postcode data
 from a spreadsheet (e.g. exported from OnlineScoutManager) onto a map.
 
 Also allows for the plotting of coloured markers to identify points of interest (Explorer Unit meeting places, Scout Groups etc.).
