@@ -1,8 +1,8 @@
-from mapper import PostcodeMapper
+from mapper import Mapper
 from cabot import groups, pubs
 
 if __name__ == "__main__":
-    p = PostcodeMapper()
+    p = Mapper(title="Network Members")
     p.importXLS("network.xlsx", "all", "A", False)
     p.addMarkers(groups("yellow"))
     p.addMarkers(pubs("magenta"))

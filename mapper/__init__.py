@@ -10,7 +10,7 @@ import cartopy.io.img_tiles as cimgt
 import numpy
 
 
-class PostcodeMapper(object):
+class Mapper(object):
 
     title = None
     endpoint = "http://api.getthedata.com/postcode/"

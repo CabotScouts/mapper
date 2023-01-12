@@ -1,4 +1,4 @@
-from mapper import PostcodeMapper
+from mapper import Mapper
 
 markers = [
     [51.501640, -0.141122, "green"],  # Buckingham Palace
@@ -6,7 +6,7 @@ markers = [
 ]
 
 if __name__ == "__main__":
-    p = PostcodeMapper(title="An Example Map")
+    p = Mapper(title="An Example Map")
     p.importXLS(
         "example.xslx",  # input xlsx file
         "all",  # name of workbook
