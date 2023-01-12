@@ -15,9 +15,9 @@ class Mapper(object):
     title = None
     endpoint = "http://api.getthedata.com/postcode/"
     coords = []
-    csvfields = ["postcode", "longitude", "latitude"]
     cache = dict()
     cachefile = None
+    csvfields = ("postcode", "latitude", "longitude")
     recache = False
     xbins = 40  # Number of bins for histogram - smaller = less resolution
     ybins = 40
@@ -36,11 +36,12 @@ class Mapper(object):
         if self.cachefile.is_file():
             with open(self.cachefile, "r") as c:
                 d = csv.DictReader(c, fieldnames=self.csvfields)
-                next(d, None)  # Skip header row
+                next(d, None)
+
                 for row in d:
                     self.cache[row["postcode"]] = (
-                        float(row["longitude"]),
                         float(row["latitude"]),
+                        float(row["longitude"]),
                     )
 
     def saveCache(self):
@@ -49,7 +50,7 @@ class Mapper(object):
                 d = csv.DictWriter(c, fieldnames=self.csvfields)
                 d.writeheader()
                 for k, v in self.cache.items():
-                    d.writerow({"postcode": k, "longitude": v[0], "latitude": v[1]})
+                    d.writerow({"postcode": k, "latitude": v[0], "longitude": v[1]})
 
     def importPostcodesFromXLS(self, **kwargs):
         file = kwargs.get("file", "import.xlsx")
@@ -104,8 +105,8 @@ class Mapper(object):
 
             if response["status"] == "match":
                 coords = (
-                    float(response["data"]["longitude"]),
                     float(response["data"]["latitude"]),
+                    float(response["data"]["longitude"]),
                 )
 
                 self.cache[key] = coords
@@ -145,8 +146,8 @@ class Mapper(object):
             pl.title(label=self.title)
 
         if len(self.coords) > 0:
-            x = numpy.asarray([m[0] for m in self.coords if m])
-            y = numpy.asarray([m[1] for m in self.coords if m])
+            x = numpy.asarray([m[1] for m in self.coords if m])
+            y = numpy.asarray([m[0] for m in self.coords if m])
 
             xynps = ax.projection.transform_points(ccrs.Geodetic(), x, y)
             m = ax.hist2d(
