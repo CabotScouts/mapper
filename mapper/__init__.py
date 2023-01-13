@@ -154,7 +154,7 @@ class Mapper(object):
                 xynps[:, 0],
                 xynps[:, 1],
                 bins=[self.xbins, self.ybins],
-                alpha=0.5,
+                alpha=0.75,
                 cmap=pl.cm.jet,
                 cmin=1,
             )
