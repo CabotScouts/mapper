@@ -15,7 +15,7 @@ Also allows for the plotting of coloured markers to identify points of interest 
 * ~~Caching of postcodes into local csv~~ (is it possible to get all postcodes in the UK in advance and skip calling the API altogether?)
 * Caching of cartopy img_tiles? Would reduce hits to tile provider and allow for offline plotting if in area we've plotted before
 * Expand map tiles to fill paper
-* Add a border around plotted points (find min/max extents from coords and expand slightly)
+* **Add a border around plotted points (find min/max extents from coords and expand slightly) - currently markers can be left off the map?**
 * Add more paper sizes
 * ~~Import of postcodes from csv~~ (create example file with postcodes around Central London)
 * Static method to load markers from a CSV into numpy array
