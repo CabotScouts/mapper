@@ -8,7 +8,7 @@ markers = [
 if __name__ == "__main__":
     p = Mapper(title="An Example Map")
     p.importXLS(
-        "example.xslx",  # input xlsx file
+        "example.xlsx",  # input xlsx file
         "all",  # name of workbook
         "A",  # column of postcodes
         True,  # does the column have a header?
